@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using AutoMapper;
+using Library.API.Entities;
 using Library.API.Models;
 using Library.API.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -28,7 +29,7 @@ namespace Library.API.Controllers
         }
 
         [HttpGet]
-        [Route("{id}")]
+        [Route("{id}", Name = "GetAuthor")]
         public IActionResult GetAuthor(Guid id)
         {           
             var authorFromRepository = libaryRepository.GetAuthor(id);
@@ -41,6 +42,26 @@ namespace Library.API.Controllers
             var author = Mapper.Map<AuthorDto>(authorFromRepository);
 
             return new JsonResult(author);
+        }
+        [HttpPost]
+        public IActionResult CrteateAuthor([FromBody] AuthorForCreationDto author)
+        {
+            if (author == null)
+            {
+                return BadRequest();
+            }
+
+            var authorEntity = Mapper.Map<Author>(author);
+
+            libaryRepository.AddAuthor(authorEntity);
+            if (!libaryRepository.Save())
+            {
+                throw new Exception("DB Error");
+            }
+
+            var authorToReturn = Mapper.Map<AuthorDto>(authorEntity);
+
+            return CreatedAtRoute("GetAuthor", new {id = authorToReturn.Id}, authorToReturn);
         }
     }
 }

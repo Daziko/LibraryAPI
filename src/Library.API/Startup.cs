@@ -36,6 +36,7 @@ namespace Library.API
             {
                 setupActions.ReturnHttpNotAcceptable = true;
                 setupActions.OutputFormatters.Add(new XmlDataContractSerializerOutputFormatter());
+                setupActions.InputFormatters.Add(new XmlDataContractSerializerInputFormatter());
             });
 
             // register the DbContext on the container, getting the connection string from

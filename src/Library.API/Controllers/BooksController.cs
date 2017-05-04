@@ -4,6 +4,7 @@ using AutoMapper;
 using Library.API.Entities;
 using Library.API.Models;
 using Library.API.Services;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Library.API.Controllers
@@ -123,10 +124,73 @@ namespace Library.API.Controllers
             var bookFromRepo = libaryRepository.GetBookForAuthor(authorId, id);
             if (bookFromRepo == null)
             {
-                return NotFound();
+                var bookToAdd = Mapper.Map<Book>(book);
+                bookToAdd.Id = id;
+
+                libaryRepository.AddBookForAuthor(authorId, bookToAdd);
+
+                if (!libaryRepository.Save())
+                {
+                    throw new Exception("DB Error");
+                }
+
+                var bookToReturn = Mapper.Map<BookDto>(bookToAdd);
+
+                return CreatedAtRoute("GetBookForAuthor", new { authorId = authorId, id = bookToReturn .Id} , bookToReturn);
             }
 
             Mapper.Map(book, bookFromRepo);
+
+            libaryRepository.UpdateBookForAuthor(bookFromRepo);
+
+            if (!libaryRepository.Save())
+            {
+                throw new Exception("DB Error");
+            }
+
+            return NoContent();
+        }
+
+        [HttpPatch]
+        [Route("{id}")]
+        public IActionResult PartiallyUpdateBookForAuthor(Guid authorId, Guid id, [FromBody] JsonPatchDocument<BookForUpdateDto> patchDoc)
+        {
+            if (patchDoc == null)
+            {
+                return BadRequest();
+            }
+
+            if (!libaryRepository.AuthorExists(authorId))
+            {
+                return NotFound();
+            }
+
+            var bookFromRepo = libaryRepository.GetBookForAuthor(authorId, id);
+            if (bookFromRepo == null)
+            {
+                var bookDto = new BookForUpdateDto();
+                patchDoc.ApplyTo(bookDto);
+
+                var bookToAdd = Mapper.Map<Book>(bookDto);
+                bookToAdd.Id = id;
+
+                libaryRepository.AddBookForAuthor(authorId, bookToAdd);
+
+                if (!libaryRepository.Save())
+                {
+                    throw new Exception("DB Error");
+                }
+
+                var bookToReturn = Mapper.Map<BookDto>(bookToAdd);
+                return CreatedAtRoute("GetBookForAuthor", new { authorId = authorId, id = bookToReturn.Id }, bookToReturn);
+
+            }
+
+            var bookTopatch = Mapper.Map<BookForUpdateDto>(bookFromRepo);
+
+            patchDoc.ApplyTo(bookTopatch);
+
+            Mapper.Map(bookTopatch, bookFromRepo);
 
             libaryRepository.UpdateBookForAuthor(bookFromRepo);
 

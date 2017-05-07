@@ -9,7 +9,10 @@ using Library.API.Entities;
 using Library.API.Models;
 using Microsoft.EntityFrameworkCore;
 using Library.API.Helpers;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc.Formatters;
+using NLog.Extensions.Logging;
+using NLog.Web;
 
 namespace Library.API
 {
@@ -53,9 +56,19 @@ namespace Library.API
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, 
             ILoggerFactory loggerFactory, LibraryContext libraryContext)
         {
+                      
             loggerFactory.AddConsole();
+            loggerFactory.AddDebug(LogLevel.Information);
+            //add NLog to .NET Core
+            loggerFactory.AddNLog();
 
-            if (env.IsDevelopment())
+            //Enable ASP.NET Core features (NLog.web) - only needed for ASP.NET Core users
+            app.AddNLogWeb();
+
+            //needed for non-NETSTANDARD platforms: configure nlog.config in your project root. NB: you need NLog.Web.AspNetCore package for this. 
+            env.ConfigureNLog("nlog.config");
+
+            if (!env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
             }
@@ -65,6 +78,13 @@ namespace Library.API
                 {
                     appBuilder.Run(async context =>
                     {
+                        var exceptionHandler = context.Features.Get<IExceptionHandlerFeature>();
+                        if (exceptionHandler != null)
+                        {
+                            var logger = loggerFactory.CreateLogger("Global exception logger");
+                            logger.LogError(500, exceptionHandler.Error, exceptionHandler.Error.Message);
+                        }
+
                         context.Response.StatusCode = 500;
                         await context.Response.WriteAsync("Error");
                     });

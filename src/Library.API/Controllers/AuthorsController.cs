@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using AutoMapper;
 using Library.API.Entities;
+using Library.API.Helpers;
 using Library.API.Models;
 using Library.API.Services;
 using Microsoft.AspNetCore.Http;
@@ -13,20 +14,69 @@ namespace Library.API.Controllers
     public class AuthorsController : Controller
     {
         private readonly ILibraryRepository libaryRepository;
+        private readonly IUrlHelper urlHelper;
 
-        public AuthorsController(ILibraryRepository libaryRepository)
+        public AuthorsController(ILibraryRepository libaryRepository, IUrlHelper urlHelper)
         {
             this.libaryRepository = libaryRepository;
+            this.urlHelper = urlHelper;
         }
 
-        [HttpGet]      
-        public IActionResult GetAuthors()
-        {
-            var authorsFromRepository = libaryRepository.GetAuthors();
+        [HttpGet(Name = "GetAuthors")]     
+        public IActionResult GetAuthors(AuthorsResourceParameters authorsQueryParameters)
+        {           
+            var authorsFromRepository = libaryRepository.GetAuthors(authorsQueryParameters);
+
+            var previousLink = authorsFromRepository.HasPrevious
+                ? CreateAuthorsResourceUri(authorsQueryParameters, ResourceUriType.PreviousPage)
+                : null;
+
+            var nextLink = authorsFromRepository.HasNext
+                ? CreateAuthorsResourceUri(authorsQueryParameters, ResourceUriType.NextPage)
+                : null;
+
+            var paginationMetadata = new
+            {
+                totalCount = authorsFromRepository.TotalCount,
+                pageSize = authorsFromRepository.PageSize,
+                currentPage = authorsFromRepository.CurrentPage,
+                totalPages = authorsFromRepository.TotalPages,
+                previousPageLink = previousLink,
+                nextPagelink = nextLink
+            };
+
+            Response.Headers.Add("X-Pagination", Newtonsoft.Json.JsonConvert.SerializeObject(paginationMetadata));
             var authors = Mapper.Map<IEnumerable<AuthorDto>>(authorsFromRepository);
 
             return Ok(authors);
+        }
 
+        private string CreateAuthorsResourceUri(AuthorsResourceParameters resourceParameters, ResourceUriType type)
+        {
+            switch (type)
+            {
+                case ResourceUriType.PreviousPage :
+                    return urlHelper.Link("GetAuthors",
+                        new
+                        {
+                            pageNumber = resourceParameters.PageNumber - 1,
+                            pageSize = resourceParameters.PageSize
+                        });
+                case ResourceUriType.NextPage :
+                    return urlHelper.Link("GetAuthors",
+                        new
+                        {
+                            pageNumber = resourceParameters.PageNumber + 1,
+                            pageSize = resourceParameters.PageSize
+                        });
+                default:
+                    return urlHelper.Link("GetAuthors",
+                        new
+                        {
+                            pageNumber = resourceParameters.PageNumber,
+                            pageSize = resourceParameters.PageSize
+                        });
+            }
         }
 
         [HttpGet]

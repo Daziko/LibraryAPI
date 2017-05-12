@@ -12,5 +12,7 @@
             get { return pageSize; }
             set { pageSize = (value > maxPageSize) ? maxPageSize : value; }
         }
+
+        public string Genre { get; set; }
     }
 }

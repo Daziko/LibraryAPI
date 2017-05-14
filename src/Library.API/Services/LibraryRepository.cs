@@ -3,16 +3,19 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Library.API.Helpers;
+using Library.API.Models;
 
 namespace Library.API.Services
 {
     public class LibraryRepository : ILibraryRepository
     {
-        private LibraryContext _context;
+        private readonly LibraryContext _context;
+        private readonly IPropertyMappingService mappingService;
 
-        public LibraryRepository(LibraryContext context)
+        public LibraryRepository(LibraryContext context, IPropertyMappingService mappingService)
         {
             _context = context;
+            this.mappingService = mappingService;
         }
 
         public void AddAuthor(Author author)
@@ -67,10 +70,13 @@ namespace Library.API.Services
 
         public PagedList<Author> GetAuthors(AuthorsResourceParameters resourceParameters)
         {
+            //var collectionBeforePaging = _context.Authors
+            //                            .OrderBy(a => a.FirstName)
+            //                            .ThenBy(a => a.LastName)
+            //                            .AsQueryable();
+
             var collectionBeforePaging = _context.Authors
-                                        .OrderBy(a => a.FirstName)
-                                        .ThenBy(a => a.LastName)
-                                        .AsQueryable();
+                .ApplySort(resourceParameters.OrderBy, mappingService.GetPropertyMapping<AuthorDto, Author>());
 
             if (!string.IsNullOrEmpty(resourceParameters.Genre))
             {

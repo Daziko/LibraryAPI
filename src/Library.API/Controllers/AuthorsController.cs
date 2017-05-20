@@ -111,8 +111,13 @@ namespace Library.API.Controllers
 
         [HttpGet]
         [Route("{id}", Name = "GetAuthor")]
-        public IActionResult GetAuthor(Guid id)
-        {           
+        public IActionResult GetAuthor(Guid id, [FromQuery] string fields)
+        {
+            if (!typeHelperService.TypeHasProperties<AuthorDto>(fields))
+            {
+                return BadRequest();
+            }
+
             var authorFromRepository = libaryRepository.GetAuthor(id);
 
             if (authorFromRepository == null)
@@ -122,7 +127,7 @@ namespace Library.API.Controllers
 
             var author = Mapper.Map<AuthorDto>(authorFromRepository);
 
-            return new JsonResult(author);
+            return new JsonResult(author.ShapeData<AuthorDto>(fields));
         }
         [HttpPost]
         public IActionResult CrteateAuthor([FromBody] AuthorForCreationDto author)

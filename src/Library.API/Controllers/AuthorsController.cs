@@ -16,12 +16,18 @@ namespace Library.API.Controllers
         private readonly ILibraryRepository libaryRepository;
         private readonly IUrlHelper urlHelper;
         private readonly IPropertyMappingService propertyMappingService;
+        private readonly ITypeHelperService typeHelperService;
 
-        public AuthorsController(ILibraryRepository libaryRepository, IUrlHelper urlHelper, IPropertyMappingService propertyMappingService)
+        public AuthorsController(
+            ILibraryRepository libaryRepository, 
+            IUrlHelper urlHelper, 
+            IPropertyMappingService propertyMappingService, 
+            ITypeHelperService typeHelperService)
         {
             this.libaryRepository = libaryRepository;
             this.urlHelper = urlHelper;
             this.propertyMappingService = propertyMappingService;
+            this.typeHelperService = typeHelperService;
         }
 
         [HttpGet(Name = "GetAuthors")]     
@@ -30,8 +36,13 @@ namespace Library.API.Controllers
             if (!propertyMappingService.ValidMappingExistFor<AuthorDto, Author>(authorsQueryParameters.OrderBy))
             {
                 return BadRequest();
-            }    
-                   
+            }
+
+            if (!typeHelperService.TypeHasProperties<AuthorDto>(authorsQueryParameters.Fields))
+            {
+                return BadRequest();
+            }  
+                 
             var authorsFromRepository = libaryRepository.GetAuthors(authorsQueryParameters);
 
             var previousLink = authorsFromRepository.HasPrevious
@@ -43,7 +54,7 @@ namespace Library.API.Controllers
                 : null;
 
             var paginationMetadata = new
-            {
+            {               
                 totalCount = authorsFromRepository.TotalCount,
                 pageSize = authorsFromRepository.PageSize,
                 currentPage = authorsFromRepository.CurrentPage,
@@ -55,7 +66,7 @@ namespace Library.API.Controllers
             Response.Headers.Add("X-Pagination", Newtonsoft.Json.JsonConvert.SerializeObject(paginationMetadata));
             var authors = Mapper.Map<IEnumerable<AuthorDto>>(authorsFromRepository);
 
-            return Ok(authors);
+            return Ok(authors.ShapeData(authorsQueryParameters.Fields));
         }
 
         private string CreateAuthorsResourceUri(AuthorsResourceParameters resourceParameters, ResourceUriType type)
@@ -66,6 +77,7 @@ namespace Library.API.Controllers
                     return urlHelper.Link("GetAuthors",
                         new
                         {
+                            fields = resourceParameters.Fields,
                             orderBy = resourceParameters.OrderBy,
                             searchQuery = resourceParameters.SearchQuery,
                             genre = resourceParameters.Genre,
@@ -76,6 +88,7 @@ namespace Library.API.Controllers
                     return urlHelper.Link("GetAuthors",
                         new
                         {
+                            fields = resourceParameters.Fields,
                             orderBy = resourceParameters.OrderBy,
                             searchQuery = resourceParameters.SearchQuery,
                             genre = resourceParameters.Genre,
@@ -86,6 +99,7 @@ namespace Library.API.Controllers
                     return urlHelper.Link("GetAuthors",
                         new
                         {
+                            fields = resourceParameters.Fields,
                             orderBy = resourceParameters.OrderBy,
                             searchQuery = resourceParameters.SearchQuery,
                             genre = resourceParameters.Genre,

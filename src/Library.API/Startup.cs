@@ -66,6 +66,8 @@ namespace Library.API
             });
             services.AddTransient<IPropertyMappingService, PropertyMappingService>();
             services.AddTransient<ITypeHelperService, TypeHelperService>();
+
+            services.AddApplicationInsightsTelemetry(Configuration);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -85,7 +87,7 @@ namespace Library.API
             env.ConfigureNLog("nlog.config");
 
             if (env.IsDevelopment())
-            {
+            {               
                 app.UseDeveloperExceptionPage();
             }
             else

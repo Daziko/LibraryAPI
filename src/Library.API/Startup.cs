@@ -18,6 +18,7 @@ using Newtonsoft.Json.Serialization;
 using NLog.Extensions.Logging;
 using NLog.Web;
 using Microsoft.ApplicationInsights;
+using Library.API.Middlewares;
 
 namespace Library.API
 {
@@ -114,6 +115,7 @@ namespace Library.API
 
             libraryContext.EnsureSeedDataForContext();
 
+            app.UseMiddleware(typeof(ErrorHandlingMiddleware));
             app.UseMvc(); 
 
             AutoMapper.Mapper.Initialize(cfg =>

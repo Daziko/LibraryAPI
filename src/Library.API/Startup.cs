@@ -17,6 +17,7 @@ using Microsoft.AspNetCore.Mvc.Routing;
 using Newtonsoft.Json.Serialization;
 using NLog.Extensions.Logging;
 using NLog.Web;
+using Microsoft.ApplicationInsights;
 
 namespace Library.API
 {
@@ -75,10 +76,10 @@ namespace Library.API
             ILoggerFactory loggerFactory, LibraryContext libraryContext)
         {
                       
-            loggerFactory.AddConsole();
-            loggerFactory.AddDebug(LogLevel.Information);
+            //loggerFactory.AddConsole();
+            //loggerFactory.AddDebug(LogLevel.Information);
             //add NLog to .NET Core
-            loggerFactory.AddNLog();
+            //loggerFactory.AddNLog();
 
             //Enable ASP.NET Core features (NLog.web) - only needed for ASP.NET Core users
             app.AddNLogWeb();
@@ -99,8 +100,10 @@ namespace Library.API
                         var exceptionHandler = context.Features.Get<IExceptionHandlerFeature>();
                         if (exceptionHandler != null)
                         {
-                            var logger = loggerFactory.CreateLogger("Global exception logger");
-                            logger.LogError(500, exceptionHandler.Error, exceptionHandler.Error.Message);
+                            //var logger = loggerFactory.CreateLogger("Global exception logger");
+                            //logger.LogError(500, exceptionHandler.Error, exceptionHandler.Error.Message);
+                            var telemetryClient = new TelemetryClient();
+                            telemetryClient.TrackException(exceptionHandler.Error);
                         }
 
                         context.Response.StatusCode = 500;

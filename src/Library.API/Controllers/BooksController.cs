@@ -15,12 +15,12 @@ namespace Library.API.Controllers
     public class BooksController : Controller
     {
         private readonly ILibraryRepository libaryRepository;
-        private readonly ILogger<BooksController> logger;
+       // private readonly ILogger<BooksController> logger;
 
         public BooksController(ILibraryRepository libaryRepository, ILogger<BooksController> logger)
         {
             this.libaryRepository = libaryRepository;
-            this.logger = logger;
+            //this.logger = logger;
         }
 
         [HttpGet]
@@ -119,7 +119,7 @@ namespace Library.API.Controllers
                 throw new Exception("DB Error");
             }
 
-            logger.LogInformation(100, $"Book {id} for author {authorId} was deleted");
+            //logger.LogInformation(100, $"Book {id} for author {authorId} was deleted");
             return NoContent();
         }
 

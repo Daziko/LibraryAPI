@@ -83,35 +83,35 @@ namespace Library.API
             //loggerFactory.AddNLog();
 
             //Enable ASP.NET Core features (NLog.web) - only needed for ASP.NET Core users
-            app.AddNLogWeb();
+            //app.AddNLogWeb();
 
             //needed for non-NETSTANDARD platforms: configure nlog.config in your project root. NB: you need NLog.Web.AspNetCore package for this. 
-            env.ConfigureNLog("nlog.config");
+            //env.ConfigureNLog("nlog.config");
 
-            if (env.IsDevelopment())
-            {               
-                app.UseDeveloperExceptionPage();
-            }
-            else
-            {
-                app.UseExceptionHandler(appBuilder =>
-                {
-                    appBuilder.Run(async context =>
-                    {
-                        var exceptionHandler = context.Features.Get<IExceptionHandlerFeature>();
-                        if (exceptionHandler != null)
-                        {
-                            //var logger = loggerFactory.CreateLogger("Global exception logger");
-                            //logger.LogError(500, exceptionHandler.Error, exceptionHandler.Error.Message);
-                            var telemetryClient = new TelemetryClient();
-                            telemetryClient.TrackException(exceptionHandler.Error);
-                        }
+            //if (env.IsDevelopment())
+            //{               
+            //    app.UseDeveloperExceptionPage();
+            //}
+            //else
+            //{
+            //    app.UseExceptionHandler(appBuilder =>
+            //    {
+            //        appBuilder.Run(async context =>
+            //        {
+            //            var exceptionHandler = context.Features.Get<IExceptionHandlerFeature>();
+            //            if (exceptionHandler != null)
+            //            {
+            //                //var logger = loggerFactory.CreateLogger("Global exception logger");
+            //                //logger.LogError(500, exceptionHandler.Error, exceptionHandler.Error.Message);
+            //                var telemetryClient = new TelemetryClient();
+            //                telemetryClient.TrackException(exceptionHandler.Error);
+            //            }
 
-                        context.Response.StatusCode = 500;
-                        await context.Response.WriteAsync("Error");
-                    });
-                });
-            }
+            //            context.Response.StatusCode = 500;
+            //            await context.Response.WriteAsync("Error");
+            //        });
+            //    });
+            //}
 
             libraryContext.EnsureSeedDataForContext();
 
